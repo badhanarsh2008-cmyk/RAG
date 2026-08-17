@@ -11,7 +11,7 @@
         <section id="messages" class="messages"></section>
 
         <form id="chat-form" class="chat-composer">
-            <input id="question" type="text" placeholder="Ask something...">
+            <input id="question" type="text" placeholder="Ask something..." required>
             <button type="submit">Send</button>
         </form>
     </main>
@@ -22,9 +22,10 @@
 
         function addmessage(text, role) {
             const box = document.createElement('div');
-            box.className = `message${role}`;
+            box.className = `message ${role}`;
             box.textContent = text;
             messages.appendChild(box);
+            return box;
         }
 
         form.addEventListener("submit", async (event) => {
@@ -36,15 +37,18 @@
             addmessage(question, "user");
             input.value = "";
 
-            const answerbox = addmessage("Thinking...", "assistant");
-            const response = await fetch("/ask", {
-                method : "POST",
-                headers : { "content-type" : "application/json"},
-                body : JSON.stringify({ question })
-            });
-
-            const data = await response.json();
-            answerbox.textContent = data.answer;
+            const answerbox = addmessage("Thinking...", "bot");
+            try {
+                const response = await fetch("/ask", {
+                    method : "POST",
+                    headers : { "Content-Type" : "application/json"},
+                    body : JSON.stringify({ question })
+                });
+                const data = await response.json();
+                answerbox.textContent = response.ok ? data.answer : data.detail || "Could not get an answer.";
+            } catch {
+                answerbox.textContent = "Could not connect to the server.";
+            }
         });
     </script>
 </body>

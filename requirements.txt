@@ -5,4 +5,5 @@ sentence-transformers
 faiss-cpu
 pypdf
 python-docx
-anthropic
+openai
+python-dotenv

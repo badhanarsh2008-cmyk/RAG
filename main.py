@@ -6,6 +6,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from embed import embd_chunks
+from load_pdf import chunking, loader
+from vector import VectorStore
+
 
 
 BASE_DIRECTORY = Path(__file__).resolve().parent
@@ -51,9 +55,17 @@ async def upload_files(files: list[UploadFile] = File(...)):
         saved_names.append(original_name)
 
     try:
-        from rag import index_files
+        store = VectorStore(dim=384)
+        store.load(BASE_DIRECTORY / "my_index")
+        all_chunks = []
 
-        chunk_count = index_files(saved_paths)
+        for file_path in saved_paths:
+            all_chunks.extend(chunking(loader(file_path)))
+
+        if all_chunks:
+            store.add(embd_chunks(all_chunks), all_chunks)
+            store.save(BASE_DIRECTORY / "my_index")
+        chunk_count = len(all_chunks)
     except Exception as error:
         raise HTTPException(
             status_code=500,
