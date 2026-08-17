@@ -41,8 +41,8 @@ Context:
 
 Question: {query}"""
 
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    model = os.getenv("ANTHROPIC_MODEL")
+    api_key = os.getenv("api_key")
+    model = os.getenv("model")
     if not api_key or not model:
         return "The RAG index is ready, but ANTHROPIC_API_KEY and ANTHROPIC_MODEL are not configured."
 
