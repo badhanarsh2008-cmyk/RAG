@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 
+
 BASE_DIRECTORY = Path(__file__).resolve().parent
 UPLOAD_DIRECTORY = BASE_DIRECTORY / "uploads"
 ALLOWED_EXTENSIONS = {".pdf", ".txt", ".docx"}
