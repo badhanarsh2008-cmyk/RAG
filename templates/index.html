@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>RAG AI</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+    <body>
+        <div class="upload-card">
+    <div class="upload-header">
+      <h1>Knowledge Base Upload</h1>
+      <p>Upload PDF to power your RAG chat</p>
+    </div>
+
+    <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+      <label for="file-input" class="drop-zone" id="drop-zone">
+        <svg class="upload-icon" viewBox="0 0 24 24">
+          <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+        </svg>
+        <span class="drop-zone-text">Drag & drop your files here</span>
+        <span class="drop-zone-subtext">or click to browse from your computer</span>
+        <span class="btn-upload">Select Files</span>
+      </label>
+      
+      <input type="file" id="file-input" name="files" accept=".pdf,.txt,.docx" multiple />
+      <div id="file-status" class="file-status"></div>
+      <button type="submit" class="btn-upload submit-button">Upload selected files</button>
+    </form>
+    <section class="selected-files" aria-live="polite">
+      <p class="files-title">Selected files <span id="file-count">0</span></p>
+      <ul id="file-list" class="file-list">
+        <li class="empty-state">No files selected yet.</li>
+      </ul>
+    </section>
+  </div>
+        <script>
+    const fileInput = document.getElementById('file-input');
+    const dropZone = document.getElementById('drop-zone');
+    const fileStatus = document.getElementById('file-status');
+    const fileList = document.getElementById('file-list');
+    const fileCount = document.getElementById('file-count');
+    let selectedFiles = [];
+
+    function showSelectedFiles() {
+      fileList.innerHTML = '';
+      fileCount.textContent = selectedFiles.length;
+      if (!selectedFiles.length) {
+        fileList.innerHTML = '<li class="empty-state">No files selected yet.</li>';
+        return;
+      }
+      selectedFiles.forEach((file, index) => {
+        const item = document.createElement('li');
+        item.className = 'file-item';
+        item.style.animationDelay = `${index * 60}ms`;
+        item.textContent = file.name;
+        fileList.appendChild(item);
+      });
+    }
+
+    function addFiles(files) {
+      [...files].forEach((file) => {
+        const alreadyAdded = selectedFiles.some(existing =>
+          existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified
+        );
+        if (!alreadyAdded) selectedFiles.push(file);
+      });
+      const transfer = new DataTransfer();
+      selectedFiles.forEach(file => transfer.items.add(file));
+      fileInput.files = transfer.files;
+      showSelectedFiles();
+    }
+
+    fileInput.addEventListener('change', () => addFiles(fileInput.files));
+
+    ['dragover', 'dragenter'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      if (e.dataTransfer.files.length > 0) {
+        addFiles(e.dataTransfer.files);
+      }
+    });
+
+    document.getElementById('upload-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedFiles.length) return;
+      fileStatus.textContent = 'Uploading...';
+      const response = await fetch('/upload', { method: 'POST', body: new FormData(e.currentTarget) });
+      const result = await response.json();
+      if (!response.ok) {
+        fileStatus.textContent = result.detail || 'Upload failed.';
+        return;
+      }
+      fileStatus.textContent = result.message;
+      window.setTimeout(() => { window.location.href = '/chat'; }, 700);
+    });
+  </script>
+    </body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Chat</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="chat-card">
+    <header class="chat-header">
+      <a href="/">← Upload more files</a>
+      <h1>Ask your documents</h1>
+    </header>
+
+    <section id="messages" class="messages" aria-live="polite">
+      <div class="message assistant">Your files are ready. Ask a question about them.</div>
+    </section>
+
+    <form id="chat-form" class="chat-composer">
+      <input id="question" type="text" placeholder="Type a question..." autocomplete="off" required>
+      <button type="submit">Send</button>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('question');
+    const messages = document.getElementById('messages');
+
+    function addMessage(text, role) {
+      const item = document.createElement('div');
+      item.className = `message ${role}`;
+      item.textContent = text;
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+      return item;
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const question = input.value.trim();
+      if (!question) return;
+
+      addMessage(question, 'user');
+      input.value = '';
+      const responseMessage = addMessage('Thinking...', 'assistant');
+
+      try {
+        const response = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+        const result = await response.json();
+        responseMessage.textContent = response.ok ? result.answer : result.detail || 'Something went wrong.';
+      } catch (error) {
+        responseMessage.textContent = 'Could not connect to the server.';
+      }
+    });
+  </script>
+</body>
+</html>
