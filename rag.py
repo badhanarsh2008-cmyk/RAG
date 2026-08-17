@@ -25,8 +25,8 @@ def answer_query(query : str, k : int = 4):
     retrieved_chunks = store.search(query_vec, k = k)
     
     context = " ---\n \n \n ---".join(retrieved_chunks)
-    prompt = f"""Answer the question using ONLY the context below.
-If the answer isn't in the context, say you don't know.
+    prompt = f"""Answer the question using ONLY the context below or search about relatable content but dont go out of the context.
+            If the answer isn't in the context, say you don't know.
 
 context : {context}
 
