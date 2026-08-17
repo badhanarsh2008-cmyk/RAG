@@ -1,63 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document Chat</title>
-  <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAT</title>
 </head>
 <body>
-  <main class="chat-card">
-    <header class="chat-header">
-      <a href="/">← Upload more files</a>
-      <h1>Ask your documents</h1>
-    </header>
+    <main class="chat">
+        <section id="messages" class="messages"></section>
 
-    <section id="messages" class="messages" aria-live="polite">
-      <div class="message assistant">Your files are ready. Ask a question about them.</div>
-    </section>
+        <form id="chat-form" class="chat-composer">
+            <input id="question" type="text" placeholder="Ask something...">
+            <button type="submit">Send</button>
+        </form>
+    </main>
+    <script>
+        const form = document.getElementById("chat-form");
+        const input = document.getElementById("question");
+        const messages = document.getElementById("messages");
 
-    <form id="chat-form" class="chat-composer">
-      <input id="question" type="text" placeholder="Type a question..." autocomplete="off" required>
-      <button type="submit">Send</button>
-    </form>
-  </main>
+        function addmessage(text, role) {
+            const box = document.createElement('div');
+            box.className = `message${role}`;
+            box.textContent = text;
+            messages.appendChild(box);
+        }
 
-  <script>
-    const form = document.getElementById('chat-form');
-    const input = document.getElementById('question');
-    const messages = document.getElementById('messages');
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
 
-    function addMessage(text, role) {
-      const item = document.createElement('div');
-      item.className = `message ${role}`;
-      item.textContent = text;
-      messages.appendChild(item);
-      messages.scrollTop = messages.scrollHeight;
-      return item;
-    }
+            const question = input.value.trim();
+            if (!question) return;
 
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const question = input.value.trim();
-      if (!question) return;
+            addmessage(question, "user");
+            input.value = "";
 
-      addMessage(question, 'user');
-      input.value = '';
-      const responseMessage = addMessage('Thinking...', 'assistant');
+            const answerbox = addmessage("Thinking...", "assistant");
+            const response = await fetch("/ask", {
+                method : "POST",
+                headers : { "content-type" : "application/json"},
+                body : JSON.stringify({ question })
+            });
 
-      try {
-        const response = await fetch('/ask', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question })
+            const data = await response.json();
+            answerbox.textContent = data.answer;
         });
-        const result = await response.json();
-        responseMessage.textContent = response.ok ? result.answer : result.detail || 'Something went wrong.';
-      } catch (error) {
-        responseMessage.textContent = 'Could not connect to the server.';
-      }
-    });
-  </script>
+    </script>
 </body>
+
 </html>
